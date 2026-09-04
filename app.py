@@ -7,7 +7,21 @@ from PIL import Image, ImageOps, ImageEnhance, ImageFilter
 
 app = Flask(__name__)
 
-app.secret_key = "splitsense_secret_key"
+
+# =========================================================
+# SECRET KEY
+# =========================================================
+
+# Local computer:
+# Uses "splitsense_secret_key" by default.
+#
+# Render:
+# We can set SECRET_KEY as an environment variable.
+
+app.secret_key = os.environ.get(
+    "SECRET_KEY",
+    "splitsense_secret_key"
+)
 
 
 # =========================================================
@@ -16,7 +30,10 @@ app.secret_key = "splitsense_secret_key"
 
 UPLOAD_FOLDER = "uploads"
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(
+    UPLOAD_FOLDER,
+    exist_ok=True
+)
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
@@ -25,9 +42,42 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 # TESSERACT PATH
 # =========================================================
 
-pytesseract.pytesseract.tesseract_cmd = (
-    r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+# First check if TESSERACT_PATH is provided
+# by the deployment environment.
+
+TESSERACT_PATH = os.environ.get(
+    "TESSERACT_PATH"
 )
+
+
+if TESSERACT_PATH:
+
+    # Used when an environment variable is provided.
+    pytesseract.pytesseract.tesseract_cmd = (
+        TESSERACT_PATH
+    )
+
+else:
+
+    # -----------------------------------------------------
+    # WINDOWS - LOCAL COMPUTER
+    # -----------------------------------------------------
+
+    if os.name == "nt":
+
+        pytesseract.pytesseract.tesseract_cmd = (
+            r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+        )
+
+    # -----------------------------------------------------
+    # LINUX - RENDER / CLOUD
+    # -----------------------------------------------------
+
+    else:
+
+        pytesseract.pytesseract.tesseract_cmd = (
+            "tesseract"
+        )
 
 
 # =========================================================
@@ -37,7 +87,10 @@ pytesseract.pytesseract.tesseract_cmd = (
 @app.route("/")
 def index():
 
-    people = session.get("people", [])
+    people = session.get(
+        "people",
+        []
+    )
 
     return render_template(
         "index.html",
@@ -126,6 +179,7 @@ def add_person():
         ""
     ).strip()
 
+
     if name:
 
         people = session.get(
@@ -133,19 +187,27 @@ def add_person():
             []
         )
 
+
         # Avoid duplicate names
         if name not in people:
 
             people.append(name)
 
+
         session["people"] = people
+
 
         # Clear old split result
         session["shares"] = {}
+
         session["person_subtotals"] = {}
+
         session["person_gst"] = {}
+
         session["person_totals"] = {}
+
         session["detailed_shares"] = {}
+
 
     return redirect(
         url_for("index")
@@ -166,18 +228,26 @@ def remove_person(name):
         []
     )
 
+
     if name in people:
 
         people.remove(name)
 
+
     session["people"] = people
+
 
     # Clear old result because people changed
     session["shares"] = {}
+
     session["person_subtotals"] = {}
+
     session["person_gst"] = {}
+
     session["person_totals"] = {}
+
     session["detailed_shares"] = {}
+
 
     return redirect(
         url_for("index")
@@ -191,6 +261,7 @@ def remove_person(name):
 def normalize_quantity(value):
 
     value = value.strip().lower()
+
 
     replacements = {
 
@@ -215,19 +286,24 @@ def normalize_quantity(value):
         "ll": "1"
     }
 
+
     if value in replacements:
 
         value = replacements[value]
+
 
     try:
 
         number = float(value)
 
+
         if number.is_integer():
 
             return int(number)
 
+
         return number
+
 
     except:
 
@@ -245,20 +321,24 @@ def preprocess_image(image):
         image
     )
 
+
     # Grayscale
     image = image.convert(
         "L"
     )
+
 
     # Improve contrast
     image = ImageEnhance.Contrast(
         image
     ).enhance(2)
 
+
     # Sharpen
     image = image.filter(
         ImageFilter.SHARPEN
     )
+
 
     return image
 
@@ -270,16 +350,24 @@ def preprocess_image(image):
 def parse_receipt(text):
 
     lines = [
+
         line.strip()
+
         for line in text.splitlines()
+
         if line.strip()
     ]
 
+
     items = []
 
+
     subtotal = 0
+
     cgst = 0
+
     sgst = 0
+
     grand_total = 0
 
 
@@ -291,12 +379,17 @@ def parse_receipt(text):
 
         clean_line = line.strip()
 
+
         # Remove serial number
         clean_line = re.sub(
+
             r"^\d+\s+",
+
             "",
+
             clean_line
         )
+
 
         lower_line = clean_line.lower()
 
@@ -346,9 +439,13 @@ def parse_receipt(text):
             "add on"
         ]
 
+
         if any(
+
             word in lower_line
+
             for word in ignored_words
+
         ):
 
             continue
@@ -367,9 +464,11 @@ def parse_receipt(text):
 
             r"([0-9]+(?:\.[0-9]+)?|"
             r"i|l|il|li|lh|ih|1l|l1|ii|ll)"
+
             r"\s+"
 
             r"([\d,]+\.\d{2})"
+
             r"\s+"
 
             r"([\d,]+\.\d{2})$",
@@ -416,6 +515,7 @@ def parse_receipt(text):
 
 
         price = float(
+
             price_text.replace(
                 ",",
                 ""
@@ -424,6 +524,7 @@ def parse_receipt(text):
 
 
         amount = float(
+
             amount_text.replace(
                 ",",
                 ""
@@ -436,7 +537,9 @@ def parse_receipt(text):
         # -------------------------------------------------
 
         if any(
+
             word in name.lower()
+
             for word in [
 
                 "phone",
@@ -469,6 +572,7 @@ def parse_receipt(text):
 
                 "fssai"
             ]
+
         ):
 
             continue
@@ -479,7 +583,9 @@ def parse_receipt(text):
         # -------------------------------------------------
 
         expected_amount = round(
+
             quantity * price,
+
             2
         )
 
@@ -488,7 +594,9 @@ def parse_receipt(text):
         # Allow maximum difference of ₹1.
 
         if abs(
+
             expected_amount - amount
+
         ) > 1.0:
 
             continue
@@ -529,31 +637,48 @@ def parse_receipt(text):
                 )
 
                 and not re.search(
+
                     r"subtotal|cgst|sgst|grand total|round off",
+
                     next_line,
+
                     re.IGNORECASE
                 )
 
                 and not any(
+
                     word in next_line.lower()
+
                     for word in [
+
                         "phone",
+
                         "gstin",
+
                         "invoice",
+
                         "date",
+
                         "table",
+
                         "cashier",
+
                         "bill",
+
                         "token"
                     ]
                 )
 
                 and len(next_line) < 30
+
             ):
 
                 name = (
+
                     name
+
                     + " "
+
                     + next_line
                 )
 
@@ -578,14 +703,20 @@ def parse_receipt(text):
 
     seen = set()
 
+
     for item in items:
 
         key = (
+
             item["name"].lower(),
+
             item["quantity"],
+
             item["price"],
+
             item["amount"]
         )
+
 
         if key not in seen:
 
@@ -607,19 +738,27 @@ def parse_receipt(text):
 
         lower = line.lower()
 
+
         if (
+
             "subtotal" in lower
+
             or "sub total" in lower
+
         ):
 
             numbers = re.findall(
+
                 r"\d+(?:,\d{3})*(?:\.\d+)?",
+
                 line
             )
+
 
             if numbers:
 
                 subtotal = float(
+
                     numbers[-1].replace(
                         ",",
                         ""
@@ -635,10 +774,14 @@ def parse_receipt(text):
 
         lower = line.lower()
 
+
         numbers = re.findall(
+
             r"\d+(?:,\d{3})*(?:\.\d+)?",
+
             line
         )
+
 
         if not numbers:
 
@@ -648,6 +791,7 @@ def parse_receipt(text):
         values = [
 
             float(
+
                 n.replace(
                     ",",
                     ""
@@ -668,10 +812,14 @@ def parse_receipt(text):
             # and take actual tax amount.
 
             possible = [
+
                 x
+
                 for x in values
+
                 if x > 5
             ]
+
 
             if possible:
 
@@ -685,10 +833,14 @@ def parse_receipt(text):
         elif "sgst" in lower:
 
             possible = [
+
                 x
+
                 for x in values
+
                 if x > 5
             ]
+
 
             if possible:
 
@@ -703,16 +855,21 @@ def parse_receipt(text):
 
         lower = line.lower()
 
+
         if "grand total" in lower:
 
             numbers = re.findall(
+
                 r"\d+(?:,\d{3})*(?:\.\d+)?",
+
                 line
             )
+
 
             if numbers:
 
                 grand_total = float(
+
                     numbers[-1].replace(
                         ",",
                         ""
@@ -725,10 +882,15 @@ def parse_receipt(text):
     # =====================================================
 
     calculated_subtotal = round(
+
         sum(
+
             item["amount"]
+
             for item in items
+
         ),
+
         2
     )
 
@@ -743,7 +905,9 @@ def parse_receipt(text):
     # =====================================================
 
     expected_gst = round(
+
         subtotal * 0.025,
+
         2
     )
 
@@ -752,23 +916,35 @@ def parse_receipt(text):
     # calculate from 2.5%.
 
     if (
+
         cgst <= 5
-        or abs(cgst - expected_gst) > 1
+
+        or abs(
+            cgst - expected_gst
+        ) > 1
+
     ):
 
         cgst = expected_gst
 
 
     if (
+
         sgst <= 5
-        or abs(sgst - expected_gst) > 1
+
+        or abs(
+            sgst - expected_gst
+        ) > 1
+
     ):
 
         sgst = expected_gst
 
 
     total_gst = round(
+
         cgst + sgst,
+
         2
     )
 
@@ -780,7 +956,9 @@ def parse_receipt(text):
     if grand_total == 0:
 
         grand_total = round(
+
             subtotal + total_gst,
+
             2
         )
 
@@ -834,8 +1012,10 @@ def upload():
     if not file or file.filename == "":
 
         session["error"] = (
+
             "Please select a receipt image."
         )
+
 
         return redirect(
             url_for("index")
@@ -873,6 +1053,7 @@ def upload():
         # -------------------------------------------------
 
         processed_image = (
+
             preprocess_image(
                 image
             )
@@ -899,6 +1080,7 @@ def upload():
         # -------------------------------------------------
 
         (
+
             items,
 
             subtotal,
@@ -956,6 +1138,7 @@ def upload():
     except Exception as e:
 
         session["error"] = (
+
             f"OCR Error: {str(e)}"
         )
 
@@ -979,6 +1162,7 @@ def assign_items():
         "people",
         []
     )
+
 
     items = session.get(
         "items",
@@ -1005,8 +1189,10 @@ def assign_items():
     if not people:
 
         session["error"] = (
+
             "Please add at least one person."
         )
+
 
         return redirect(
             url_for("index")
@@ -1020,8 +1206,10 @@ def assign_items():
     if not items:
 
         session["error"] = (
+
             "Please upload a receipt first."
         )
+
 
         return redirect(
             url_for("index")
@@ -1042,6 +1230,7 @@ def assign_items():
     for index, item in enumerate(items):
 
         receipt_quantity = float(
+
             item["quantity"]
         )
 
@@ -1059,12 +1248,15 @@ def assign_items():
         for person in people:
 
             field_name = (
+
                 f"item_{index}_{person}"
             )
 
 
             value = request.form.get(
+
                 field_name,
+
                 "0"
             ).strip()
 
@@ -1075,6 +1267,7 @@ def assign_items():
                     value
                 )
 
+
             except:
 
                 quantity = 0.0
@@ -1084,9 +1277,12 @@ def assign_items():
             if quantity < 0:
 
                 session["error"] = (
+
                     f"{item['name']}: "
+
                     "Quantity cannot be negative."
                 )
+
 
                 return redirect(
                     url_for("index")
@@ -1104,6 +1300,7 @@ def assign_items():
 
                     f"{receipt_quantity:g} quantity."
                 )
+
 
                 return redirect(
                     url_for("index")
@@ -1128,13 +1325,17 @@ def assign_items():
         # -------------------------------------------------
 
         if abs(
+
             assigned_quantity
             - receipt_quantity
+
         ) > 0.01:
 
             remaining = round(
+
                 receipt_quantity
                 - assigned_quantity,
+
                 2
             )
 
@@ -1150,11 +1351,13 @@ def assign_items():
                     "Please assign the complete quantity."
                 )
 
+
             else:
 
                 extra = abs(
                     remaining
                 )
+
 
                 session["error"] = (
 
@@ -1207,12 +1410,15 @@ def assign_items():
         for person in people:
 
             field_name = (
+
                 f"item_{index}_{person}"
             )
 
 
             quantity = entered_quantities.get(
+
                 field_name,
+
                 0
             )
 
@@ -1223,7 +1429,9 @@ def assign_items():
 
 
             amount = round(
+
                 quantity * price,
+
                 2
             )
 
@@ -1295,7 +1503,9 @@ def assign_items():
             person_gst[
                 person
             ] = round(
+
                 gst,
+
                 2
             )
 
@@ -1307,6 +1517,7 @@ def assign_items():
     gst_difference = round(
 
         total_gst
+
         - sum(
             person_gst.values()
         ),
@@ -1316,8 +1527,11 @@ def assign_items():
 
 
     if (
+
         people
+
         and abs(gst_difference) > 0
+
     ):
 
         highest_person = max(
@@ -1325,6 +1539,7 @@ def assign_items():
             people,
 
             key=lambda person:
+
                 person_subtotals[
                     person
                 ]
@@ -1338,6 +1553,7 @@ def assign_items():
             person_gst[
                 highest_person
             ]
+
             + gst_difference,
 
             2
@@ -1360,6 +1576,7 @@ def assign_items():
             person_subtotals[
                 person
             ]
+
             + person_gst[
                 person
             ],
@@ -1373,28 +1590,40 @@ def assign_items():
     # =====================================================
 
     session["person_subtotals"] = (
+
         person_subtotals
     )
 
+
     session["person_gst"] = (
+
         person_gst
     )
 
+
     session["person_totals"] = (
+
         person_totals
     )
+
 
     session["shares"] = (
+
         person_totals
     )
 
+
     session["detailed_shares"] = (
+
         detailed_shares
     )
 
+
     session["entered_quantities"] = (
+
         entered_quantities
     )
+
 
     session["error"] = ""
 
