@@ -12,12 +12,6 @@ app = Flask(__name__)
 # SECRET KEY
 # =========================================================
 
-# Local computer:
-# Uses "splitsense_secret_key" by default.
-#
-# Render:
-# We can set SECRET_KEY as an environment variable.
-
 app.secret_key = os.environ.get(
     "SECRET_KEY",
     "splitsense_secret_key"
@@ -42,9 +36,6 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 # TESSERACT PATH
 # =========================================================
 
-# First check if TESSERACT_PATH is provided
-# by the deployment environment.
-
 TESSERACT_PATH = os.environ.get(
     "TESSERACT_PATH"
 )
@@ -52,7 +43,6 @@ TESSERACT_PATH = os.environ.get(
 
 if TESSERACT_PATH:
 
-    # Used when an environment variable is provided.
     pytesseract.pytesseract.tesseract_cmd = (
         TESSERACT_PATH
     )
@@ -322,19 +312,53 @@ def preprocess_image(image):
     )
 
 
-    # Grayscale
+    # -----------------------------------------------------
+    # RESIZE LARGE IMAGES
+    # -----------------------------------------------------
+    # Large mobile/phone images can make Tesseract
+    # consume too much memory on Render Free instance.
+    #
+    # We resize only when the image is wider than 1600 px.
+    # Smaller receipt images are left unchanged.
+
+    max_width = 1600
+
+    if image.width > max_width:
+
+        ratio = max_width / image.width
+
+        new_height = int(
+            image.height * ratio
+        )
+
+        image = image.resize(
+            (max_width, new_height),
+            Image.Resampling.LANCZOS
+        )
+
+
+    # -----------------------------------------------------
+    # GRAYSCALE
+    # -----------------------------------------------------
+
     image = image.convert(
         "L"
     )
 
 
-    # Improve contrast
+    # -----------------------------------------------------
+    # IMPROVE CONTRAST
+    # -----------------------------------------------------
+
     image = ImageEnhance.Contrast(
         image
     ).enhance(2)
 
 
-    # Sharpen
+    # -----------------------------------------------------
+    # SHARPEN
+    # -----------------------------------------------------
+
     image = image.filter(
         ImageFilter.SHARPEN
     )
