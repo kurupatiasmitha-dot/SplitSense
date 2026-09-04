@@ -1,0 +1,1672 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>
+        SplitSense - Smart Receipt Splitter
+    </title>
+
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+
+        body {
+
+            font-family: Arial, sans-serif;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #eef2ff,
+                    #f8fafc
+                );
+
+            color: #1e293b;
+
+            min-height: 100vh;
+
+            padding: 30px 15px;
+        }
+
+
+        .container {
+
+            width: 95%;
+
+            max-width: 1100px;
+
+            margin: auto;
+        }
+
+
+        /* =========================================
+           HEADER
+        ========================================= */
+
+        .header {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #6366f1,
+                    #8b5cf6
+                );
+
+            color: white;
+
+            text-align: center;
+
+            padding: 30px 20px;
+
+            border-radius: 20px;
+
+            margin-bottom: 25px;
+
+            box-shadow:
+                0 10px 25px
+                rgba(79, 70, 229, 0.2);
+        }
+
+
+        .header h1 {
+
+            font-size: 38px;
+
+            margin-bottom: 8px;
+        }
+
+
+        .header p {
+
+            font-size: 16px;
+
+            opacity: 0.95;
+        }
+
+
+        /* =========================================
+           CARD
+        ========================================= */
+
+        .card {
+
+            background: white;
+
+            border-radius: 18px;
+
+            padding: 25px;
+
+            margin-bottom: 25px;
+
+            box-shadow:
+                0 6px 20px
+                rgba(15, 23, 42, 0.08);
+        }
+
+
+        .card h2 {
+
+            color: #4f46e5;
+
+            margin-bottom: 20px;
+
+            font-size: 23px;
+        }
+
+
+        /* =========================================
+           ERROR
+        ========================================= */
+
+        .error {
+
+            background: #fee2e2;
+
+            color: #b91c1c;
+
+            padding: 15px;
+
+            border-radius: 10px;
+
+            margin-bottom: 20px;
+
+            font-weight: bold;
+        }
+
+
+        /* =========================================
+           UPLOAD
+        ========================================= */
+
+        .upload-box {
+
+            text-align: center;
+
+            border: 2px dashed #818cf8;
+
+            background: #f5f3ff;
+
+            padding: 35px 20px;
+
+            border-radius: 15px;
+        }
+
+
+        .upload-box p {
+
+            margin-bottom: 15px;
+
+            color: #475569;
+        }
+
+
+        .upload-box input[type="file"] {
+
+            margin: 15px 0;
+
+            padding: 10px;
+        }
+
+
+        /* =========================================
+           BUTTONS
+        ========================================= */
+
+        .btn {
+
+            border: none;
+
+            padding: 12px 24px;
+
+            border-radius: 10px;
+
+            font-size: 15px;
+
+            font-weight: bold;
+
+            cursor: pointer;
+
+            transition: 0.2s;
+        }
+
+
+        .btn:hover {
+
+            transform: translateY(-2px);
+        }
+
+
+        .btn-primary {
+
+            background: #6366f1;
+
+            color: white;
+        }
+
+
+        .btn-primary:hover {
+
+            background: #4f46e5;
+        }
+
+
+        .btn-success {
+
+            background: #10b981;
+
+            color: white;
+        }
+
+
+        .btn-success:hover {
+
+            background: #059669;
+        }
+
+
+        /* =========================================
+           TABLE
+        ========================================= */
+
+        .table-container {
+
+            overflow-x: auto;
+        }
+
+
+        table {
+
+            width: 100%;
+
+            border-collapse: collapse;
+
+            margin-top: 10px;
+        }
+
+
+        th {
+
+            background: #6366f1;
+
+            color: white;
+
+            padding: 13px;
+
+            text-align: center;
+        }
+
+
+        td {
+
+            padding: 12px;
+
+            text-align: center;
+
+            border-bottom:
+                1px solid #e2e8f0;
+        }
+
+
+        tr:hover {
+
+            background: #f8fafc;
+        }
+
+
+        /* =========================================
+           BILL SUMMARY
+        ========================================= */
+
+        .summary-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(4, 1fr);
+
+            gap: 15px;
+        }
+
+
+        .summary-box {
+
+            padding: 20px;
+
+            border-radius: 14px;
+
+            text-align: center;
+        }
+
+
+        .summary-box h3 {
+
+            font-size: 14px;
+
+            margin-bottom: 8px;
+        }
+
+
+        .summary-box p {
+
+            font-size: 23px;
+
+            font-weight: bold;
+        }
+
+
+        .subtotal {
+
+            background: #dbeafe;
+
+            color: #1d4ed8;
+        }
+
+
+        .cgst {
+
+            background: #dcfce7;
+
+            color: #15803d;
+        }
+
+
+        .sgst {
+
+            background: #fef3c7;
+
+            color: #b45309;
+        }
+
+
+        .gst {
+
+            background: #fce7f3;
+
+            color: #be185d;
+        }
+
+
+        .grand {
+
+            background: #ede9fe;
+
+            color: #6d28d9;
+        }
+
+
+        /* =========================================
+           PEOPLE
+        ========================================= */
+
+        .people-list {
+
+            display: flex;
+
+            flex-wrap: wrap;
+
+            gap: 12px;
+
+            margin-bottom: 20px;
+        }
+
+
+        .person {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 8px;
+
+            background: #eef2ff;
+
+            color: #4338ca;
+
+            padding: 10px 14px;
+
+            border-radius: 25px;
+
+            font-weight: bold;
+        }
+
+
+        .remove-person {
+
+            text-decoration: none;
+
+            color: #ef4444;
+
+            font-size: 20px;
+
+            font-weight: bold;
+        }
+
+
+        .remove-person:hover {
+
+            color: #b91c1c;
+        }
+
+
+        .add-person-form {
+
+            display: flex;
+
+            gap: 10px;
+
+            flex-wrap: wrap;
+        }
+
+
+        .add-person-form input {
+
+            flex: 1;
+
+            min-width: 220px;
+
+            padding: 12px;
+
+            border:
+                1px solid #cbd5e1;
+
+            border-radius: 10px;
+
+            font-size: 15px;
+        }
+
+
+        /* =========================================
+           ASSIGN ITEMS
+        ========================================= */
+
+        .item-assignment {
+
+            background: #f8fafc;
+
+            border-radius: 15px;
+
+            padding: 20px;
+
+            margin-bottom: 20px;
+
+            border-left:
+                5px solid #6366f1;
+        }
+
+
+        .item-title {
+
+            font-size: 19px;
+
+            font-weight: bold;
+
+            color: #312e81;
+
+            margin-bottom: 8px;
+        }
+
+
+        .item-info {
+
+            color: #64748b;
+
+            margin-bottom: 18px;
+        }
+
+
+        .person-inputs {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(
+                    auto-fit,
+                    minmax(180px, 1fr)
+                );
+
+            gap: 15px;
+        }
+
+
+        .person-input {
+
+            background: white;
+
+            padding: 15px;
+
+            border-radius: 12px;
+
+            border:
+                1px solid #e2e8f0;
+        }
+
+
+        .person-input label {
+
+            display: block;
+
+            font-weight: bold;
+
+            color: #334155;
+
+            margin-bottom: 8px;
+        }
+
+
+        .qty-input {
+
+            width: 100%;
+
+            padding: 10px;
+
+            border:
+                2px solid #cbd5e1;
+
+            border-radius: 8px;
+
+            font-size: 16px;
+        }
+
+
+        .qty-input:focus {
+
+            outline: none;
+
+            border-color: #6366f1;
+        }
+
+
+        .person-amount {
+
+            margin-top: 8px;
+
+            color: #059669;
+
+            font-weight: bold;
+        }
+
+
+        .remaining {
+
+            margin-top: 15px;
+
+            padding: 12px;
+
+            border-radius: 10px;
+
+            background: #e0f2fe;
+
+            color: #0369a1;
+
+            font-weight: bold;
+        }
+
+
+        .remaining.complete {
+
+            background: #dcfce7;
+
+            color: #15803d;
+        }
+
+
+        .remaining.error-qty {
+
+            background: #fee2e2;
+
+            color: #b91c1c;
+        }
+
+
+        .calculate-container {
+
+            text-align: center;
+
+            margin-top: 25px;
+        }
+
+
+        /* =========================================
+           FINAL RESULT
+        ========================================= */
+
+        .result-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(
+                    auto-fit,
+                    minmax(250px, 1fr)
+                );
+
+            gap: 18px;
+        }
+
+
+        .result-card {
+
+            border-radius: 16px;
+
+            padding: 20px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #f8fafc,
+                    #eef2ff
+                );
+
+            border:
+                1px solid #e2e8f0;
+        }
+
+
+        .result-card h3 {
+
+            color: #4338ca;
+
+            margin-bottom: 15px;
+
+            font-size: 20px;
+        }
+
+
+        .result-item {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            gap: 10px;
+
+            padding: 7px 0;
+
+            border-bottom:
+                1px solid #e2e8f0;
+        }
+
+
+        .result-total {
+
+            margin-top: 15px;
+
+            padding-top: 12px;
+
+            border-top:
+                2px solid #6366f1;
+        }
+
+
+        .result-total p {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            margin: 7px 0;
+        }
+
+
+        .final-total {
+
+            font-size: 21px;
+
+            font-weight: bold;
+
+            color: #6d28d9;
+        }
+
+
+        .grand-total-card {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #6366f1,
+                    #8b5cf6
+                );
+
+            color: white;
+
+            text-align: center;
+
+            padding: 25px;
+
+            border-radius: 18px;
+
+            margin-top: 20px;
+        }
+
+
+        .grand-total-card h3 {
+
+            color: white;
+
+            margin-bottom: 10px;
+        }
+
+
+        .grand-total-card p {
+
+            font-size: 32px;
+
+            font-weight: bold;
+        }
+
+
+        .empty-message {
+
+            text-align: center;
+
+            color: #64748b;
+
+            padding: 15px;
+        }
+
+
+        /* =========================================
+           RESPONSIVE
+        ========================================= */
+
+        @media (max-width: 800px) {
+
+            .summary-grid {
+
+                grid-template-columns:
+                    repeat(2, 1fr);
+            }
+
+
+            .header h1 {
+
+                font-size: 30px;
+            }
+        }
+
+
+        @media (max-width: 500px) {
+
+            .summary-grid {
+
+                grid-template-columns: 1fr;
+            }
+
+
+            .card {
+
+                padding: 18px;
+            }
+
+
+            .header h1 {
+
+                font-size: 27px;
+            }
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+    <!-- =====================================
+         HEADER
+    ====================================== -->
+
+    <div class="header">
+
+        <h1>
+            💸 SplitSense
+        </h1>
+
+        <p>
+            Smart Receipt Analysis and Fair Expense Sharing System
+        </p>
+
+    </div>
+
+
+    <!-- =====================================
+         ERROR
+    ====================================== -->
+
+    {% if error %}
+
+    <div class="error">
+
+        ⚠️ {{ error }}
+
+    </div>
+
+    {% endif %}
+
+
+    <!-- =====================================
+         UPLOAD RECEIPT
+    ====================================== -->
+
+    <div class="card">
+
+        <h2>
+            📤 Upload Receipt
+        </h2>
+
+
+        <div class="upload-box">
+
+            <p>
+                Upload your restaurant receipt image
+                and SplitSense will detect the items.
+            </p>
+
+
+            <form
+                action="{{ url_for('upload') }}"
+                method="POST"
+                enctype="multipart/form-data"
+            >
+
+                <input
+                    type="file"
+                    name="receipt"
+                    accept="image/*"
+                    required
+                >
+
+
+                <br>
+
+
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                >
+
+                    🔍 Analyze Receipt
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    {% if items %}
+
+
+    <!-- =====================================
+         DETECTED ITEMS
+    ====================================== -->
+
+    <div class="card">
+
+        <h2>
+            🧾 Detected Items
+        </h2>
+
+
+        <div class="table-container">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            #
+                        </th>
+
+                        <th>
+                            Item
+                        </th>
+
+                        <th>
+                            Quantity
+                        </th>
+
+                        <th>
+                            Price
+                        </th>
+
+                        <th>
+                            Amount
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                {% for item in items %}
+
+                    <tr>
+
+                        <td>
+                            {{ loop.index }}
+                        </td>
+
+                        <td>
+                            <strong>
+                                {{ item.name }}
+                            </strong>
+                        </td>
+
+                        <td>
+                            {{ item.quantity }}
+                        </td>
+
+                        <td>
+                            ₹{{ "%.2f"|format(item.price) }}
+                        </td>
+
+                        <td>
+                            ₹{{ "%.2f"|format(item.amount) }}
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================
+         BILL SUMMARY
+    ====================================== -->
+
+    <div class="card">
+
+        <h2>
+            💰 Bill Summary
+        </h2>
+
+
+        <div class="summary-grid">
+
+
+            <div class="summary-box subtotal">
+
+                <h3>
+                    Subtotal
+                </h3>
+
+                <p>
+                    ₹{{ "%.2f"|format(subtotal) }}
+                </p>
+
+            </div>
+
+
+            <div class="summary-box cgst">
+
+                <h3>
+                    CGST
+                </h3>
+
+                <p>
+                    ₹{{ "%.2f"|format(cgst) }}
+                </p>
+
+            </div>
+
+
+            <div class="summary-box sgst">
+
+                <h3>
+                    SGST
+                </h3>
+
+                <p>
+                    ₹{{ "%.2f"|format(sgst) }}
+                </p>
+
+            </div>
+
+
+            <div class="summary-box gst">
+
+                <h3>
+                    Total GST
+                </h3>
+
+                <p>
+                    ₹{{ "%.2f"|format(total_gst) }}
+                </p>
+
+            </div>
+
+
+        </div>
+
+
+        <div
+            class="summary-box grand"
+            style="margin-top:15px;"
+        >
+
+            <h3>
+                Grand Total
+            </h3>
+
+            <p>
+                ₹{{ "%.2f"|format(grand_total) }}
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================
+         PEOPLE
+    ====================================== -->
+
+    <div class="card">
+
+        <h2>
+            👥 People
+        </h2>
+
+
+        {% if people %}
+
+        <div class="people-list">
+
+            {% for person in people %}
+
+            <div class="person">
+
+                <span>
+                    👤 {{ person }}
+                </span>
+
+
+                <a
+                    href="{{ url_for('remove_person', name=person) }}"
+                    class="remove-person"
+                    title="Remove {{ person }}"
+                >
+                    ×
+                </a>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+        {% else %}
+
+        <div class="empty-message">
+
+            No people added yet.
+            Add people to split the bill.
+
+        </div>
+
+        {% endif %}
+
+
+        <form
+            action="{{ url_for('add_person') }}"
+            method="POST"
+            class="add-person-form"
+        >
+
+            <input
+                type="text"
+                name="name"
+                placeholder="Enter person's name"
+                required
+            >
+
+
+            <button
+                type="submit"
+                class="btn btn-primary"
+            >
+
+                ➕ Add Person
+
+            </button>
+
+        </form>
+
+    </div>
+
+
+    <!-- =====================================
+         ASSIGN ITEMS
+    ====================================== -->
+
+    {% if people %}
+
+    <div class="card">
+
+        <h2>
+            🧮 Assign Items
+        </h2>
+
+
+        <p
+            style="
+                color:#64748b;
+                margin-bottom:20px;
+            "
+        >
+
+            Enter how many units of each item
+            each person consumed.
+
+        </p>
+
+
+        <form
+            action="{{ url_for('assign_items') }}"
+            method="POST"
+        >
+
+
+            {% for item in items %}
+
+            {% set item_index = loop.index0 %}
+
+
+            <div class="item-assignment">
+
+
+                <div class="item-title">
+
+                    {{ loop.index }}.
+                    {{ item.name }}
+
+                </div>
+
+
+                <div class="item-info">
+
+                    Receipt Quantity:
+
+                    <strong>
+                        {{ item.quantity }}
+                    </strong>
+
+                    &nbsp; | &nbsp;
+
+                    Price per unit:
+
+                    <strong>
+                        ₹{{ "%.2f"|format(item.price) }}
+                    </strong>
+
+                </div>
+
+
+                <div class="person-inputs">
+
+
+                    {% for person in people %}
+
+                    <div class="person-input">
+
+
+                        <label>
+
+                            👤 {{ person }}
+
+                        </label>
+
+
+                        <input
+                            type="number"
+                            name="item_{{ item_index }}_{{ person }}"
+                            class="qty-input"
+                            data-index="{{ item_index }}"
+                            data-price="{{ item.price }}"
+                            data-max="{{ item.quantity }}"
+                            min="0"
+                            step="0.1"
+                            value="{{ entered_quantities.get('item_' ~ item_index ~ '_' ~ person, 0) }}"
+                            oninput="calculateItemShare(this)"
+                        >
+
+
+                        <div class="person-amount">
+
+                            Amount:
+
+                            ₹<span
+                                class="amount-value"
+                            >0.00</span>
+
+                        </div>
+
+
+                    </div>
+
+                    {% endfor %}
+
+
+                </div>
+
+
+                <div
+                    class="remaining"
+                    id="remaining-{{ item_index }}"
+                >
+
+                    Remaining quantity:
+
+                    <span class="remaining-value">
+
+                        {{ item.quantity }}
+
+                    </span>
+
+                </div>
+
+
+            </div>
+
+
+            {% endfor %}
+
+
+            <div class="calculate-container">
+
+                <button
+                    type="submit"
+                    class="btn btn-success"
+                    style="
+                        font-size:17px;
+                        padding:14px 35px;
+                    "
+                >
+
+                    🧮 Calculate Split
+
+                </button>
+
+            </div>
+
+
+        </form>
+
+    </div>
+
+    {% endif %}
+
+
+    <!-- =====================================
+         FINAL RESULT
+    ====================================== -->
+
+    {% if shares %}
+
+    <div class="card">
+
+        <h2>
+            🎉 Final Split Result
+        </h2>
+
+
+        <div class="result-grid">
+
+
+            {% for person in people %}
+
+            <div class="result-card">
+
+
+                <h3>
+
+                    👤 {{ person }}
+
+                </h3>
+
+
+                {% if detailed_shares.get(person) %}
+
+
+                    {% for item in detailed_shares[person] %}
+
+                    <div class="result-item">
+
+                        <span>
+
+                            {{ item.name }}
+
+                            ×
+
+                            {{ item.quantity }}
+
+                        </span>
+
+
+                        <span>
+
+                            ₹{{ "%.2f"|format(item.amount) }}
+
+                        </span>
+
+                    </div>
+
+                    {% endfor %}
+
+
+                {% else %}
+
+
+                    <div class="empty-message">
+
+                        No items assigned
+
+                    </div>
+
+
+                {% endif %}
+
+
+                <div class="result-total">
+
+
+                    <p>
+
+                        <span>
+                            Subtotal
+                        </span>
+
+                        <strong>
+
+                            ₹{{
+                                "%.2f"|format(
+                                    person_subtotals.get(
+                                        person,
+                                        0
+                                    )
+                                )
+                            }}
+
+                        </strong>
+
+                    </p>
+
+
+                    <p>
+
+                        <span>
+                            GST
+                        </span>
+
+                        <strong>
+
+                            ₹{{
+                                "%.2f"|format(
+                                    person_gst.get(
+                                        person,
+                                        0
+                                    )
+                                )
+                            }}
+
+                        </strong>
+
+                    </p>
+
+
+                    <p class="final-total">
+
+                        <span>
+                            Total
+                        </span>
+
+                        <span>
+
+                            ₹{{
+                                "%.2f"|format(
+                                    person_totals.get(
+                                        person,
+                                        0
+                                    )
+                                )
+                            }}
+
+                        </span>
+
+                    </p>
+
+
+                </div>
+
+
+            </div>
+
+            {% endfor %}
+
+
+        </div>
+
+
+        <!-- =================================
+             GRAND TOTAL
+        ================================== -->
+
+        <div class="grand-total-card">
+
+            <h3>
+                💵 Total Bill
+            </h3>
+
+            <p>
+                ₹{{ "%.2f"|format(grand_total) }}
+            </p>
+
+        </div>
+
+
+    </div>
+
+    {% endif %}
+
+
+    {% endif %}
+
+
+</div>
+
+
+<!-- =========================================
+     JAVASCRIPT
+========================================= -->
+
+<script>
+
+
+function calculateItemShare(input) {
+
+
+    const itemIndex =
+        input.dataset.index;
+
+
+    const price =
+        parseFloat(
+            input.dataset.price
+        ) || 0;
+
+
+    const maxQuantity =
+        parseFloat(
+            input.dataset.max
+        ) || 0;
+
+
+    const inputs =
+        document.querySelectorAll(
+
+            '.qty-input[data-index="' +
+            itemIndex +
+            '"]'
+
+        );
+
+
+    let totalQuantity = 0;
+
+
+    inputs.forEach(
+        function(qtyInput) {
+
+
+            let quantity =
+                parseFloat(
+                    qtyInput.value
+                ) || 0;
+
+
+            if (quantity < 0) {
+
+                quantity = 0;
+
+                qtyInput.value = 0;
+            }
+
+
+            totalQuantity +=
+                quantity;
+
+
+            const amountElement =
+                qtyInput
+                .parentElement
+                .querySelector(
+                    ".amount-value"
+                );
+
+
+            if (amountElement) {
+
+                const amount =
+                    quantity * price;
+
+
+                amountElement.textContent =
+                    amount.toFixed(2);
+            }
+
+
+        }
+    );
+
+
+    const remainingElement =
+        document.getElementById(
+            "remaining-" +
+            itemIndex
+        );
+
+
+    if (!remainingElement) {
+
+        return;
+    }
+
+
+    const remaining =
+        maxQuantity -
+        totalQuantity;
+
+
+    /* =====================================
+       COMPLETE
+    ====================================== */
+
+    if (
+        Math.abs(remaining)
+        < 0.001
+    ) {
+
+
+        remainingElement.className =
+            "remaining complete";
+
+
+        remainingElement.innerHTML =
+            "✅ Quantity completely assigned";
+
+    }
+
+
+    /* =====================================
+       STILL REMAINING
+    ====================================== */
+
+    else if (remaining > 0) {
+
+
+        remainingElement.className =
+            "remaining";
+
+
+        remainingElement.innerHTML =
+
+            "Remaining quantity: " +
+
+            "<span class='remaining-value'>" +
+
+            remaining.toFixed(1) +
+
+            "</span>";
+
+    }
+
+
+    /* =====================================
+       EXCEEDED
+    ====================================== */
+
+    else {
+
+
+        remainingElement.className =
+            "remaining error-qty";
+
+
+        remainingElement.innerHTML =
+
+            "⚠️ Quantity exceeded by " +
+
+            Math.abs(
+                remaining
+            ).toFixed(1);
+
+    }
+
+}
+
+
+/* =========================================
+   RESTORE AMOUNTS AFTER PAGE LOAD
+========================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function() {
+
+
+        const inputs =
+            document.querySelectorAll(
+                ".qty-input"
+            );
+
+
+        inputs.forEach(
+            function(input) {
+
+                calculateItemShare(
+                    input
+                );
+
+            }
+        );
+
+    }
+);
+
+
+</script>
+
+
+</body>
+
+</html>
